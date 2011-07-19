@@ -10,7 +10,7 @@ describe Thnad::Parser do
   end
 
   it 'reads a no-arg function definition' do
-    expected = { :func => 'foo' }
+    expected = { :func => 'foo', :params => nil, :body => [] }
     @parser.parse(<<HERE.strip).must_equal expected
 function foo() {
 }
@@ -18,7 +18,9 @@ HERE
   end
 
   it 'reads a function definition' do
-    expected = { :func => 'foo' }
+    expected = { :func   => 'foo',
+                 :params => { :name => 'x' },
+                 :body   => [] }
     @parser.parse(<<HERE.strip).must_equal expected
 function foo(x) {
 }

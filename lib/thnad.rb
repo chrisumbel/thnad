@@ -18,22 +18,37 @@ module Thnad
 
     rule(:operand) { name | number }
     rule(:operator) { match('[++/-]') }
-    rule(:calculation) { operand >> operator >> operand }
+    rule(:calculation) { operand.as(:left) >> operator.as(:op) >> operand.as(:right) }
 
     rule(:expression) { calculation }
 
-    rule(:args) {
+    rule(:params) {
       lparen >>
-        (name >> (comma >> name).repeat(0)).maybe >>
+        ((name.as(:name) >> (comma >> name.as(:name)).repeat(0)).maybe).as(:params) >>
       rparen
     }
 
-    rule(:body) { lbrace >> calculation.repeat(0) >> rbrace }
+    rule(:body) { lbrace >> calculation.repeat(0).as(:body) >> rbrace }
 
     rule(:func) {
-      str('function') >> space >> name.as(:func) >> args >> body
+      str('function') >> space >> name.as(:func) >> params >> body
     }
 
     root(:func)
+  end
+
+  class Function < Struct.new(:name, :params, :body)
+  end
+
+  class Transform < Parslet::Transform
+    rule(:name => simple(:name)) { name }
+
+    rule(:func   => simple(:func),
+         :params => simple(:name),
+         :body   => sequence(:body)) { Function.new(func, name, body) }
+
+    rule(:func   => simple(:func),
+         :params => sequence(:params),
+         :body   => sequence(:body)) { Function.new(func, params, body) }
   end
 end
