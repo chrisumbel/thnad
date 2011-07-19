@@ -21,8 +21,8 @@ describe Thnad::Transform do
     input = { :func   => 'foo',
               :params => [ { :name => 'x' },
                            { :name => 'y' } ],
-              :body   => [] }
-    expected = Thnad::Function.new 'foo', ['x', 'y'], []
+              :body   => [ { :number => '5' } ] }
+    expected = Thnad::Function.new 'foo', ['x', 'y'], [Thnad::Number.new(5)]
     @transform.apply(input).must_equal expected
   end
 end
