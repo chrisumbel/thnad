@@ -29,4 +29,15 @@ function foo(x) {
 }
 HERE
   end
+
+  it 'reads a variable inside a function' do
+    expected = { :func   => { :name => 'foo' },
+                 :params => { :param => { :name => 'x' } },
+                 :body   => [ { :variable => { :name => 'x' } } ] }
+    @parser.parse(<<HERE.strip).must_equal expected
+function foo(x) {
+    x
+}
+HERE
+  end
 end

@@ -14,9 +14,10 @@ module Thnad
     rule(:comma) { str(',') >> space? }
 
     rule(:name) { match('[a-z]').repeat(1).as(:name) >> space? }
+    rule(:variable) { name.as(:variable) }
     rule(:number) { match('[0-9]').repeat(1).as(:number) >> space? }
 
-    rule(:operand) { name | number }
+    rule(:operand) { variable | number }
     rule(:operator) { match('[++/-]') }
     rule(:calculation) { operand.as(:left) >> operator.as(:op) >> operand.as(:right) }
 
@@ -52,10 +53,14 @@ module Thnad
   class Function < Struct.new(:name, :params, :body)
     include Emitter
 
-    def eval
-      types = ['int'] * (params.count + 1)
+    def eval(context)
+      param_list = params.is_a?(Array) ? params : [params]
+
+      context[:params] = param_list
+
+      types = ['int'] * (param_list.count + 1)
       b.public_static_method(name, [], *types) do
-        body.each(&:eval)
+        body.each { |e| e.eval(context) }
         b.ireturn
       end
     end
@@ -64,8 +69,17 @@ module Thnad
   class Number < Struct.new(:value)
     include Emitter
 
-    def eval
+    def eval(context)
       b.ldc value
+    end
+  end
+
+  class Local < Struct.new(:name)
+    include Emitter
+
+    def eval(context)
+      raise "Unknown variable #{name}" unless context[:params].include?(name)
+      b.iload context[:params].index(name) + 1
     end
   end
 
@@ -73,6 +87,8 @@ module Thnad
     rule(:name => simple(:name)) { name }
 
     rule(:number => simple(:value)) { Number.new(value.to_i) }
+
+    rule(:variable => simple(:variable)) { Local.new(variable) }
 
     rule(:func   => simple(:func),
          :params => simple(:name),

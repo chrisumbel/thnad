@@ -25,4 +25,12 @@ describe Thnad::Transform do
     expected = Thnad::Function.new 'foo', ['x', 'y'], [Thnad::Number.new(5)]
     @transform.apply(input).must_equal expected
   end
+
+  it 'transforms a variable inside a function' do
+    input = { :func   => { :name => 'foo' },
+              :params => { :name => 'x' },
+              :body   => [ { :variable => { :name => 'x' } } ] }
+    expected = Thnad::Function.new 'foo', 'x', [Thnad::Local.new('x')]
+    @transform.apply(input).must_equal expected
+  end
 end
