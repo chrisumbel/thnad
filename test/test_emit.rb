@@ -8,6 +8,7 @@ require 'thnad'
 describe 'Emit' do
   before do
     @builder = mock
+    @method  = mock
     Thnad::Emitter.builder = @builder
     @context = Hash.new
   end
@@ -15,9 +16,10 @@ describe 'Emit' do
   it 'emits a function def with two args' do
     input = Thnad::Function.new 'foo', ['x', 'y'], [Thnad::Number.new(5)]
 
-    @builder.expects(:public_static_method).with('foo', [], 'int', 'int', 'int').yields
-    @builder.expects(:ldc).with(5)
-    @builder.expects(:ireturn)
+    @builder.expects(:int).returns('int')
+    @builder.expects(:public_static_method).with('foo', [], 'int', 'int', 'int').yields(@method)
+    @method.expects(:ldc).with(5)
+    @method.expects(:ireturn)
 
     input.eval @context
   end
@@ -25,9 +27,21 @@ describe 'Emit' do
   it 'emits a function def using a param' do
     input = Thnad::Function.new 'foo', 'x', [Thnad::Local.new('x')]
 
-    @builder.expects(:public_static_method).with('foo', [], 'int', 'int').yields
-    @builder.expects(:iload).with(1)
-    @builder.expects(:ireturn)
+    @builder.expects(:int).returns('int')
+    @builder.expects(:public_static_method).with('foo', [], 'int', 'int').yields(@method)
+    @method.expects(:iload).with(0)
+    @method.expects(:ireturn)
+
+    input.eval @context
+  end
+
+  it 'emits a function call' do
+    input = Thnad::Funcall.new 'print', [Thnad::Number.new(42)]
+    @context['_int'] = 'int'
+    @context['_class'] = 'example'
+
+    @builder.expects(:ldc).with(42)
+    @builder.expects(:invokestatic).with('example', 'print', ['int', 'int'])
 
     input.eval @context
   end

@@ -33,4 +33,11 @@ describe Thnad::Transform do
     expected = Thnad::Function.new 'foo', 'x', [Thnad::Local.new('x')]
     @transform.apply(input).must_equal expected
   end
+
+  it 'transforms a function call' do
+    input = { :funcall => { :name => 'foo' },
+              :args    => { :arg => { :number => '42' } } }
+    expected = Thnad::Funcall.new 'foo', [Thnad::Number.new(42)]
+    @transform.apply(input).must_equal expected
+  end
 end

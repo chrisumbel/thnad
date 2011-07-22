@@ -13,7 +13,7 @@ describe Thnad::Parser do
     expected = { :func   => { :name => 'foo' },
                  :params => nil,
                  :body   => [] }
-    @parser.parse(<<HERE.strip).must_equal expected
+    @parser.func.parse(<<HERE.strip).must_equal expected
 function foo() {
 }
 HERE
@@ -23,7 +23,7 @@ HERE
     expected = { :func   => { :name => 'foo' },
                  :params => { :param => { :name => 'x' } },
                  :body   => [ { :number => '5' } ] }
-    @parser.parse(<<HERE.strip).must_equal expected
+    @parser.func.parse(<<HERE.strip).must_equal expected
 function foo(x) {
     5
 }
@@ -34,10 +34,18 @@ HERE
     expected = { :func   => { :name => 'foo' },
                  :params => { :param => { :name => 'x' } },
                  :body   => [ { :variable => { :name => 'x' } } ] }
-    @parser.parse(<<HERE.strip).must_equal expected
+    @parser.func.parse(<<HERE.strip).must_equal expected
 function foo(x) {
     x
 }
+HERE
+  end
+
+  it 'reads a function call' do
+    expected = { :funcall => { :name => 'foo' },
+                 :args    => { :arg => { :number => '42' } } }
+    @parser.funcall.parse(<<HERE.strip).must_equal expected
+foo(42)
 HERE
   end
 end

@@ -21,13 +21,21 @@ module Thnad
     rule(:operator) { match('[++/-]') }
     rule(:calculation) { operand.as(:left) >> operator.as(:op) >> operand.as(:right) }
 
-    rule(:expression) { calculation | operand }
-
     rule(:params) {
       lparen >>
         ((name.as(:param) >> (comma >> name.as(:param)).repeat(0)).maybe).as(:params) >>
       rparen
     }
+
+    rule(:args) {
+      lparen >>
+        ((operand.as(:arg) >> (comma >> operand.as(:arg)).repeat(0)).maybe).as(:args) >>
+      rparen
+    }
+
+    rule(:funcall) { name.as(:funcall) >> args }
+
+    rule(:expression) { funcall | calculation | operand }
 
     rule(:body) { lbrace >> expression.repeat(0).as(:body) >> rbrace }
 
@@ -35,7 +43,9 @@ module Thnad
       str('function') >> space >> name.as(:func) >> params >> body
     }
 
-    root(:func)
+    rule(:program) { func.repeat(0) >> expression.repeat(0) }
+
+    root(:program)
   end
 
   module Emitter
@@ -58,11 +68,25 @@ module Thnad
 
       context[:params] = param_list
 
-      types = ['int'] * (param_list.count + 1)
-      b.public_static_method(name, [], *types) do
-        body.each { |e| e.eval(context) }
+      _name = name
+      _body = body
+
+      types = [b.int] * (param_list.count + 1)
+      b.public_static_method(_name, [], *types) do |m|
+        ::Thnad::Emitter.builder = m
+        _body.each { |e| e.eval(context) }
         b.ireturn
       end
+    end
+  end
+
+  class Funcall < Struct.new(:name, :args)
+    include Emitter
+
+    def eval(context)
+      args.each { |a| a.eval(context) }
+      types = [context['_int']] * (args.length + 1)
+      b.invokestatic context['_class'], name, types
     end
   end
 
@@ -79,23 +103,33 @@ module Thnad
 
     def eval(context)
       raise "Unknown variable #{name}" unless context[:params].include?(name)
-      b.iload context[:params].index(name) + 1
+      b.iload context[:params].index(name) # + 1
     end
   end
 
   class Transform < Parslet::Transform
-    rule(:name => simple(:name)) { name }
+    rule(:name => simple(:name)) { name.to_s }
 
     rule(:number => simple(:value)) { Number.new(value.to_i) }
 
     rule(:variable => simple(:variable)) { Local.new(variable) }
 
+    rule(:arg => simple(:arg)) { arg }
+
+    rule(:param => simple(:param)) { param }
+
     rule(:func   => simple(:func),
          :params => simple(:name),
-         :body   => sequence(:body)) { Function.new(func, name, body) }
+         :body   => sequence(:body)) { Function.new(func.to_s, name, body) }
 
     rule(:func   => simple(:func),
          :params => sequence(:params),
-         :body   => sequence(:body)) { Function.new(func, params, body) }
+         :body   => sequence(:body)) { Function.new(func.to_s, params, body) }
+
+    rule(:funcall => simple(:funcall),
+         :args    => simple(:number)) { Funcall.new(funcall.to_s, [number]) }
+
+    rule(:funcall => simple(:funcall),
+         :args    => sequence(:args)) { Funcall.new(funcall.to_s, args, body) }
   end
 end

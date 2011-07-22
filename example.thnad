@@ -1,0 +1,5 @@
+function baz(x) {
+  x
+}
+
+print(42)
