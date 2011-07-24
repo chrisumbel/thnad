@@ -9,7 +9,6 @@ describe 'Emit' do
   before do
     @builder = mock
     @method  = mock
-    Thnad::Emitter.builder = @builder
     @context = Hash.new
   end
 
@@ -21,7 +20,7 @@ describe 'Emit' do
     @method.expects(:ldc).with(5)
     @method.expects(:ireturn)
 
-    input.eval @context
+    input.eval @context, @builder
   end
 
   it 'emits a function def using a param' do
@@ -32,7 +31,7 @@ describe 'Emit' do
     @method.expects(:iload).with(0)
     @method.expects(:ireturn)
 
-    input.eval @context
+    input.eval @context, @builder
   end
 
   it 'emits a function call' do
@@ -43,7 +42,7 @@ describe 'Emit' do
     @builder.expects(:ldc).with(42)
     @builder.expects(:invokestatic).with('example', 'print', ['int', 'int'])
 
-    input.eval @context
+    input.eval @context, @builder
   end
 
   it 'emits a conditional' do
@@ -63,6 +62,6 @@ describe 'Emit' do
     @builder.expects(:ldc).with(667)
     @builder.expects(:label).with(:endif)
 
-    input.eval @context
+    input.eval @context, @builder
   end
 end

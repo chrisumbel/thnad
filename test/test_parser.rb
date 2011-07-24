@@ -49,6 +49,15 @@ foo(42)
 HERE
   end
 
+  it 'reads a nested function call' do
+    expected = { :funcall => { :name => 'f' },
+                 :args => { :arg => { :funcall => { :name => 'g' },
+                                      :args => { :arg => { :number => '1' } } } } }
+    @parser.funcall.parse(<<HERE.strip).must_equal expected
+f(g(1))
+HERE
+  end
+
   it 'reads a conditional' do
     expected = { :cond     => { :number => '0' },
                  :if_true  => { :body => [ { :number => '42' } ] },

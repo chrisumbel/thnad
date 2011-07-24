@@ -29,7 +29,7 @@ module Thnad
 
     rule(:args) {
       lparen >>
-        ((operand.as(:arg) >> (comma >> operand.as(:arg)).repeat(0)).maybe).as(:args) >>
+        ((expression.as(:arg) >> (comma >> expression.as(:arg)).repeat(0)).maybe).as(:args) >>
       rparen
     }
 
@@ -40,7 +40,7 @@ module Thnad
       body.as(:if_true) >> str('else') >> space >> body.as(:if_false)
     }
 
-    rule(:expression) { funcall | calculation | operand }
+    rule(:expression) { cond | funcall | calculation | operand }
 
     rule(:body) { lbrace >> expression.repeat(0).as(:body) >> rbrace }
 
@@ -53,22 +53,8 @@ module Thnad
     root(:program)
   end
 
-  module Emitter
-    def self.builder=(b)
-      @@builder = b
-    end
-
-    private
-
-    def b
-      @@builder
-    end
-  end
-
   class Function < Struct.new(:name, :params, :body)
-    include Emitter
-
-    def eval(context)
+    def eval(context, b)
       param_list = params.is_a?(Array) ? params : [params]
 
       context[:params] = param_list
@@ -78,49 +64,40 @@ module Thnad
 
       types = [b.int] * (param_list.count + 1)
       b.public_static_method(_name, [], *types) do |m|
-        ::Thnad::Emitter.builder = m
-        _body.each { |e| e.eval(context) }
-        b.ireturn
+        _body.each { |e| e.eval(context, m) }
+        m.ireturn
       end
     end
   end
 
   class Funcall < Struct.new(:name, :args)
-    include Emitter
-
-    def eval(context)
-      args.each { |a| a.eval(context) }
+    def eval(context, b)
+      args.each { |a| a.eval(context, b) }
       types = [context['_int']] * (args.length + 1)
       b.invokestatic context['_class'], name, types
     end
   end
 
   class Conditional < Struct.new(:cond, :if_true, :if_false)
-    include Emitter
-
-    def eval(context)
-      cond.eval context
+    def eval(context, b)
+      cond.eval context, b
       b.ifeq :else
-      if_true.each { |e| e.eval context }
+      if_true.each { |e| e.eval context, b }
       b.goto :endif
       b.label :else
-      if_false.each { |e| e.eval context }
+      if_false.each { |e| e.eval context, b }
       b.label :endif
     end
   end
 
   class Number < Struct.new(:value)
-    include Emitter
-
-    def eval(context)
+    def eval(context, b)
       b.ldc value
     end
   end
 
   class Local < Struct.new(:name)
-    include Emitter
-
-    def eval(context)
+    def eval(context, b)
       raise "Unknown variable #{name}" unless context[:params].include?(name)
       b.iload context[:params].index(name) # + 1
     end
@@ -149,7 +126,7 @@ module Thnad
          :args    => simple(:number)) { Funcall.new(funcall.to_s, [number]) }
 
     rule(:funcall => simple(:funcall),
-         :args    => sequence(:args)) { Funcall.new(funcall.to_s, args, body) }
+         :args    => sequence(:args)) { Funcall.new(funcall.to_s, args) }
 
     rule(:cond     => simple(:cond),
          :if_true  => {:body => sequence(:if_true)},

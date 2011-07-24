@@ -20,21 +20,19 @@ module Thnad
           funcs = tree[0...first_expr]
           exprs = tree[first_expr..-1]
 
-          Thnad::Emitter.builder = c
           funcs.each do |f|
             context = Hash.new
             context['_class'] = c
-            f.eval(context)
+            f.eval(context, c)
           end
 
           c.public_static_method 'main', [], void, string[] do |b|
-            Thnad::Emitter.builder = b
             exprs.each do |t|
               context = Hash.new
               context['_int'] = c.int
               context['_class'] = c
 
-              t.eval(context)
+              t.eval(context, b)
             end
             b.returnvoid
           end
