@@ -48,4 +48,17 @@ HERE
 foo(42)
 HERE
   end
+
+  it 'reads a conditional' do
+    expected = { :cond     => { :number => '0' },
+                 :if_true  => { :body => [ { :number => '42' } ] },
+                 :if_false => { :body => [ { :number => '667' } ] } }
+    @parser.cond.parse(<<HERE.strip).must_equal expected
+if(0) {
+  42
+} else {
+  667
+}
+HERE
+  end
 end

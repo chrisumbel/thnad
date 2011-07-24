@@ -45,4 +45,24 @@ describe 'Emit' do
 
     input.eval @context
   end
+
+  it 'emits a conditional' do
+    input = Thnad::Conditional.new \
+      Thnad::Number.new(0),
+      [Thnad::Number.new(42)],
+      [Thnad::Number.new(667)]
+
+    @context['_int'] = 'int'
+    @context['_class'] = 'example'
+
+    @builder.expects(:ldc).with(0)
+    @builder.expects(:ifeq).with(:else)
+    @builder.expects(:ldc).with(42)
+    @builder.expects(:goto).with(:endif)
+    @builder.expects(:label).with(:else)
+    @builder.expects(:ldc).with(667)
+    @builder.expects(:label).with(:endif)
+
+    input.eval @context
+  end
 end

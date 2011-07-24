@@ -40,4 +40,15 @@ describe Thnad::Transform do
     expected = Thnad::Funcall.new 'foo', [Thnad::Number.new(42)]
     @transform.apply(input).must_equal expected
   end
+
+  it 'transforms a conditional' do
+    input = { :cond     => { :number => '0' },
+              :if_true  => { :body => [ { :number => '42' } ] },
+              :if_false => { :body => [ { :number => '667' } ] } }
+    expected = Thnad::Conditional.new \
+      Thnad::Number.new(0),
+      [Thnad::Number.new(42)],
+      [Thnad::Number.new(667)]
+    @transform.apply(input).must_equal expected
+  end
 end

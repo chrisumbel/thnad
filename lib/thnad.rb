@@ -35,6 +35,11 @@ module Thnad
 
     rule(:funcall) { name.as(:funcall) >> args }
 
+    rule(:cond) {
+      str('if') >> lparen >> expression.as(:cond) >> rparen >>
+      body.as(:if_true) >> str('else') >> space >> body.as(:if_false)
+    }
+
     rule(:expression) { funcall | calculation | operand }
 
     rule(:body) { lbrace >> expression.repeat(0).as(:body) >> rbrace }
@@ -90,6 +95,20 @@ module Thnad
     end
   end
 
+  class Conditional < Struct.new(:cond, :if_true, :if_false)
+    include Emitter
+
+    def eval(context)
+      cond.eval context
+      b.ifeq :else
+      if_true.each { |e| e.eval context }
+      b.goto :endif
+      b.label :else
+      if_false.each { |e| e.eval context }
+      b.label :endif
+    end
+  end
+
   class Number < Struct.new(:value)
     include Emitter
 
@@ -131,5 +150,9 @@ module Thnad
 
     rule(:funcall => simple(:funcall),
          :args    => sequence(:args)) { Funcall.new(funcall.to_s, args, body) }
+
+    rule(:cond     => simple(:cond),
+         :if_true  => {:body => sequence(:if_true)},
+         :if_false => {:body => sequence(:if_false)}) { Conditional.new(cond, if_true, if_false) }
   end
 end
