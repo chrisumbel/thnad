@@ -18,8 +18,8 @@ module Thnad
     rule(:number) { match('[0-9]').repeat(1).as(:number) >> space? }
 
     rule(:operand) { variable | number }
-    rule(:operator) { match('[++/-]') }
-    rule(:calculation) { operand.as(:left) >> operator.as(:op) >> operand.as(:right) }
+    rule(:operator) { match('[=*/+-]').as(:op) >> space? }
+    rule(:calculation) { operand.as(:left) >> operator >> expression.as(:right) }
 
     rule(:params) {
       lparen >>
@@ -53,18 +53,39 @@ module Thnad
     root(:program)
   end
 
+  class Calculation < Struct.new(:left, :op, :right)
+    def eval(context, b)
+      left.eval context, b
+      right.eval context, b
+      case op
+      when '+' then b.iadd
+      when '-' then b.isub
+      when '*' then b.imul
+      when '/' then b.idiv
+      when '=' then
+        b.if_icmpeq :eq
+        b.ldc 0
+        b.goto :endeq
+        b.label :eq
+        b.ldc -1
+        b.label :endeq
+      else
+        raise "Unknown operator #{op}"
+      end
+    end
+  end
+
   class Function < Struct.new(:name, :params, :body)
     def eval(context, b)
       param_list = params.is_a?(Array) ? params : [params]
 
       context[:params] = param_list
 
-      _name = name
-      _body = body
-
       types = [b.int] * (param_list.count + 1)
-      b.public_static_method(_name, [], *types) do |m|
-        _body.each { |e| e.eval(context, m) }
+      b.public_static_method(self.name, [], *types) do |m|
+        self.body.each do |e|
+          e.eval(context, m)
+        end
         m.ireturn
       end
     end
@@ -73,8 +94,8 @@ module Thnad
   class Funcall < Struct.new(:name, :args)
     def eval(context, b)
       args.each { |a| a.eval(context, b) }
-      types = [context['_int']] * (args.length + 1)
-      b.invokestatic context['_class'], name, types
+      types = [b.int] * (args.length + 1)
+      b.invokestatic b.class_builder, name, types
     end
   end
 
@@ -98,7 +119,7 @@ module Thnad
 
   class Local < Struct.new(:name)
     def eval(context, b)
-      raise "Unknown variable #{name}" unless context[:params].include?(name)
+      raise "Unknown variable #{name}" unless (context[:params] || {}).include?(name)
       b.iload context[:params].index(name) # + 1
     end
   end
@@ -111,6 +132,10 @@ module Thnad
     rule(:variable => simple(:variable)) { Local.new(variable) }
 
     rule(:arg => simple(:arg)) { arg }
+
+    rule(:left  => simple(:left),
+         :op    => simple(:op),
+         :right => simple(:right)) { Calculation.new left, op, right }
 
     rule(:param => simple(:param)) { param }
 

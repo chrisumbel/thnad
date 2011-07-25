@@ -17,8 +17,8 @@ module Thnad
       builder = BiteScript::FileBuilder.build(filename) do
         public_class klass, object do |c|
           first_expr = tree.index { |t| ! t.is_a?(Function) }
-          funcs = tree[0...first_expr]
-          exprs = tree[first_expr..-1]
+          funcs = first_expr ? tree[0...first_expr] : tree
+          exprs = first_expr ? tree[first_expr..-1] : []
 
           funcs.each do |f|
             context = Hash.new
@@ -51,7 +51,6 @@ module Thnad
           f.write b.generate
         end
       end
-
     end
   end
 end

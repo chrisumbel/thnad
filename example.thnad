@@ -1,5 +1,9 @@
-function baz(x) {
-  x
+function fact(n) {
+  if(n = 1) {
+    1
+  } else {
+    n * fact(n - 1)
+  }
 }
 
-print(42)
+print(fact(4))

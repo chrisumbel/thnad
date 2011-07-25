@@ -9,6 +9,14 @@ describe Thnad::Transform do
     @transform = Thnad::Transform.new
   end
 
+  it 'transforms a numeric expression' do
+    input = { :left  => { :number => '2' },
+              :op => '+',
+              :right => { :number => '3' } }
+    expected = Thnad::Calculation.new Thnad::Number.new(2), '+', Thnad::Number.new(3)
+    @transform.apply(input).must_equal expected
+  end
+
   it 'transforms a function def with one arg' do
     input = { :func   => 'foo',
               :params => { :name => 'x' },

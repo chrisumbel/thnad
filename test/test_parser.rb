@@ -9,6 +9,15 @@ describe Thnad::Parser do
     @parser = Thnad::Parser.new
   end
 
+  it 'reads a numeric expression' do
+    expected = { :left  => { :number => '2' },
+                 :op => '+',
+                 :right => { :number => '3' } }
+    @parser.calculation.parse(<<HERE.strip).must_equal expected
+2 + 3
+HERE
+  end
+
   it 'reads a no-arg function definition' do
     expected = { :func   => { :name => 'foo' },
                  :params => nil,

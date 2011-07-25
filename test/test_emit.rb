@@ -8,8 +8,18 @@ require 'thnad'
 describe 'Emit' do
   before do
     @builder = mock
-    @method  = mock
+    @class   = mock
     @context = Hash.new
+  end
+
+  it 'emits a numeric expression' do
+    input = Thnad::Calculation.new Thnad::Number.new(2), '+', Thnad::Number.new(3)
+
+    @builder.expects(:ldc).with(2)
+    @builder.expects(:ldc).with(3)
+    @builder.expects(:iadd)
+
+    input.eval @context, @builder
   end
 
   it 'emits a function def with two args' do
@@ -36,11 +46,11 @@ describe 'Emit' do
 
   it 'emits a function call' do
     input = Thnad::Funcall.new 'print', [Thnad::Number.new(42)]
-    @context['_int'] = 'int'
-    @context['_class'] = 'example'
 
+    @builder.expects('class_builder').returns(@class)
+    @builder.expects(:int).returns('int')
     @builder.expects(:ldc).with(42)
-    @builder.expects(:invokestatic).with('example', 'print', ['int', 'int'])
+    @builder.expects(:invokestatic).with(@class, 'print', ['int', 'int'])
 
     input.eval @context, @builder
   end
@@ -50,9 +60,6 @@ describe 'Emit' do
       Thnad::Number.new(0),
       [Thnad::Number.new(42)],
       [Thnad::Number.new(667)]
-
-    @context['_int'] = 'int'
-    @context['_class'] = 'example'
 
     @builder.expects(:ldc).with(0)
     @builder.expects(:ifeq).with(:else)
