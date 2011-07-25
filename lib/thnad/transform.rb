@@ -4,7 +4,7 @@ module Thnad
 
     rule(:number => simple(:value)) { Number.new(value.to_i) }
 
-    rule(:variable => simple(:variable)) { Local.new(variable) }
+    rule(:usage => simple(:usage)) { Usage.new(usage) }
 
     rule(:arg => simple(:arg)) { arg }
 

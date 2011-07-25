@@ -18,26 +18,36 @@ module Thnad
     rule(:else_kw) { str('else')     >> space  }
     rule(:func_kw) { str('function') >> space  }
 
-    rule(:name) { match('[a-z]').repeat(1).as(:name) >> space? }
-    rule(:variable) { name.as(:variable) }
+    # parameter names and numeric values
+    rule(:name)   { match('[a-z]').repeat(1).as(:name) >> space? }
     rule(:number) { match('[0-9]').repeat(1).as(:number) >> space? }
 
-    # parameters listed in a function definition
+    # an instance where a parameter is used
+    rule(:usage)  { name.as(:usage) }
+
+    # function definitions
+    #
+    rule(:func) {
+      func_kw >> name.as(:func) >> params >> body
+    }
+
     rule(:params) {
       lparen >>
         ((name.as(:param) >> (comma >> name.as(:param)).repeat(0)).maybe).as(:params) >>
       rparen
     }
 
-    # arguments passed in a function call
+    # function calls
+    #
+    rule(:funcall) { name.as(:funcall) >> args }
+
     rule(:args) {
       lparen >>
         ((expression.as(:arg) >> (comma >> expression.as(:arg)).repeat(0)).maybe).as(:args) >>
       rparen
     }
 
-    rule(:funcall) { name.as(:funcall) >> args }
-
+    # conditional statements
     rule(:cond) {
       if_kw >> lparen >> expression.as(:cond) >> rparen >>
         body.as(:if_true) >>
@@ -45,15 +55,10 @@ module Thnad
         body.as(:if_false)
     }
 
-    rule(:expression) { cond | funcall | variable | number }
-
-    rule(:body) { lbrace >> expression.repeat(0).as(:body) >> rbrace }
-
-    rule(:func) {
-      func_kw >> name.as(:func) >> params >> body
-    }
-
-    rule(:program) { func.repeat(0) >> expression.repeat(1) }
+    # program building blocks
+    rule(:expression) { cond | funcall | usage | number }
+    rule(:body)       { lbrace >> expression.repeat(0).as(:body) >> rbrace }
+    rule(:program)    { func.repeat(0) >> expression.repeat(1) }
 
     root(:program)
   end

@@ -12,6 +12,14 @@ describe 'Emit' do
     @context = Hash.new
   end
 
+  it 'emits a number' do
+    input = Thnad::Number.new 42
+
+    @builder.expects(:ldc).with(42)
+    
+    input.eval @context, @builder
+  end
+
   it 'emits a function def with two args' do
     input = Thnad::Function.new 'foo', ['x', 'y'], [Thnad::Number.new(5)]
 
@@ -24,7 +32,7 @@ describe 'Emit' do
   end
 
   it 'emits a function def using a param' do
-    input = Thnad::Function.new 'foo', 'x', [Thnad::Local.new('x')]
+    input = Thnad::Function.new 'foo', 'x', [Thnad::Usage.new('x')]
 
     @builder.expects(:int).returns('int')
     @builder.expects(:public_static_method).with('foo', [], 'int', 'int').yields(@method)

@@ -1,9 +1,9 @@
-function fact(n) {
+function factorial(n) {
   if(eq(n, 1)) {
     1
   } else {
-    times(n, fact(minus(n, 1)))
+    times(n, factorial(minus(n, 1)))
   }
 }
 
-print(fact(4))
+print(factorial(4))

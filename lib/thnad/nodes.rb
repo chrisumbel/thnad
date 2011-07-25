@@ -43,9 +43,9 @@ module Thnad
     end
   end
 
-  class Local < Struct.new(:name)
+  class Usage < Struct.new(:name)
     def eval(context, b)
-      raise "Unknown variable #{name}" unless (context[:params] || {}).include?(name)
+      raise "Unknown name #{name}" unless (context[:params] || {}).include?(name)
       b.iload context[:params].index(name) # + 1
     end
   end

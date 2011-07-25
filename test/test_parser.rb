@@ -9,6 +9,12 @@ describe Thnad::Parser do
     @parser = Thnad::Parser.new
   end
 
+  it 'reads a number' do
+    expected = { :number => '42' }
+    
+    @parser.number.parse('42').must_equal expected
+  end
+
   it 'reads a no-arg function definition' do
     expected = { :func   => { :name => 'foo' },
                  :params => nil,
@@ -30,10 +36,10 @@ function foo(x) {
 HERE
   end
 
-  it 'reads a variable inside a function' do
+  it 'reads a parameter use inside a function' do
     expected = { :func   => { :name => 'foo' },
                  :params => { :param => { :name => 'x' } },
-                 :body   => [ { :variable => { :name => 'x' } } ] }
+                 :body   => [ { :usage => { :name => 'x' } } ] }
     @parser.func.parse(<<HERE.strip).must_equal expected
 function foo(x) {
     x

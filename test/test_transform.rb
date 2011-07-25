@@ -9,6 +9,13 @@ describe Thnad::Transform do
     @transform = Thnad::Transform.new
   end
 
+  it 'transforms a number' do
+    input = { :number => '42' }
+    expected = Thnad::Number.new(42)
+    
+    @transform.apply(input).must_equal expected
+  end
+
   it 'transforms a function def with one arg' do
     input = { :func   => 'foo',
               :params => { :name => 'x' },
@@ -26,11 +33,11 @@ describe Thnad::Transform do
     @transform.apply(input).must_equal expected
   end
 
-  it 'transforms a variable inside a function' do
+  it 'transforms a parameter use inside a function' do
     input = { :func   => { :name => 'foo' },
               :params => { :name => 'x' },
-              :body   => [ { :variable => { :name => 'x' } } ] }
-    expected = Thnad::Function.new 'foo', 'x', [Thnad::Local.new('x')]
+              :body   => [ { :usage => { :name => 'x' } } ] }
+    expected = Thnad::Function.new 'foo', 'x', [Thnad::Usage.new('x')]
     @transform.apply(input).must_equal expected
   end
 
