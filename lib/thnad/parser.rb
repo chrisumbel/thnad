@@ -17,10 +17,6 @@ module Thnad
     rule(:variable) { name.as(:variable) }
     rule(:number) { match('[0-9]').repeat(1).as(:number) >> space? }
 
-    rule(:operand) { variable | number }
-    rule(:operator) { match('[=*/+-]').as(:op) >> space? }
-    rule(:calculation) { operand.as(:left) >> operator >> expression.as(:right) }
-
     rule(:params) {
       lparen >>
         ((name.as(:param) >> (comma >> name.as(:param)).repeat(0)).maybe).as(:params) >>
@@ -40,7 +36,7 @@ module Thnad
       body.as(:if_true) >> str('else') >> space >> body.as(:if_false)
     }
 
-    rule(:expression) { cond | funcall | calculation | operand }
+    rule(:expression) { cond | funcall | variable | number }
 
     rule(:body) { lbrace >> expression.repeat(0).as(:body) >> rbrace }
 

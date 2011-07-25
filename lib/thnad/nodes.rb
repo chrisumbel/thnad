@@ -1,28 +1,6 @@
 require 'parslet'
 
 module Thnad
-  class Calculation < Struct.new(:left, :op, :right)
-    def eval(context, b)
-      left.eval context, b
-      right.eval context, b
-      case op
-      when '+' then b.iadd
-      when '-' then b.isub
-      when '*' then b.imul
-      when '/' then b.idiv
-      when '=' then
-        b.if_icmpeq :eq
-        b.ldc 0
-        b.goto :endeq
-        b.label :eq
-        b.ldc -1
-        b.label :endeq
-      else
-        raise "Unknown operator #{op}"
-      end
-    end
-  end
-
   class Function < Struct.new(:name, :params, :body)
     def eval(context, b)
       param_list = params.is_a?(Array) ? params : [params]

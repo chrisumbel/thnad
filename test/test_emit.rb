@@ -12,16 +12,6 @@ describe 'Emit' do
     @context = Hash.new
   end
 
-  it 'emits a numeric expression' do
-    input = Thnad::Calculation.new Thnad::Number.new(2), '+', Thnad::Number.new(3)
-
-    @builder.expects(:ldc).with(2)
-    @builder.expects(:ldc).with(3)
-    @builder.expects(:iadd)
-
-    input.eval @context, @builder
-  end
-
   it 'emits a function def with two args' do
     input = Thnad::Function.new 'foo', ['x', 'y'], [Thnad::Number.new(5)]
 

@@ -8,10 +8,6 @@ module Thnad
 
     rule(:arg => simple(:arg)) { arg }
 
-    rule(:left  => simple(:left),
-         :op    => simple(:op),
-         :right => simple(:right)) { Calculation.new left, op, right }
-
     rule(:param => simple(:param)) { param }
 
     rule(:func   => simple(:func),
