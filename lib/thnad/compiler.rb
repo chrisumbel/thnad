@@ -22,16 +22,12 @@ module Thnad
 
           funcs.each do |f|
             context = Hash.new
-            context['_class'] = c
             f.eval(context, c)
           end
 
           c.public_static_method 'main', [], void, string[] do |b|
             exprs.each do |t|
               context = Hash.new
-              context['_int'] = c.int
-              context['_class'] = c
-
               t.eval(context, b)
             end
             b.returnvoid
